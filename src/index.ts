@@ -231,7 +231,7 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
           <html lang="en">
           <head>
             <meta charset="utf8" />
-            <title>KV Namespace CRUD</title>
+            <title>Form Demo</title>
             <meta name="viewport" content="width=device-width,initial-scale=1" />
 			
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
@@ -256,7 +256,7 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
 					<div class="card bg-dark text-white" style="border-radius: 1rem;">
 					  <div class="card-body p-5 text-center">
 						<form id="updateForm">
-						  <div id="response">Fill out this form and hit sumbit to insert a new record. If one exists, you will be prompted to overwrite.</div>
+						  <div id="response">Fill out this form and hit sumbit to insert a new redirect record. If one exists, you will be prompted to overwrite.</div>
 						  <br>
 						  <div class="form-outline form-white mb-4">
 							<label for="key"> Key</label>

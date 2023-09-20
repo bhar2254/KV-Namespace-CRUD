@@ -1,0 +1,12 @@
+name = "redirectory"
+main = "src/index.ts"
+compatibility_date = "2023-09-20"
+usage_model = "bundled"
+env = { }
+
+[triggers]
+crons = [ ]
+
+[[kv_namespaces]]
+id = "1911d15629e8414db3666248c2f13beb"
+binding = "NAMESPACE"
