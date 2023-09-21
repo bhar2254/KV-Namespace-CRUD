@@ -1,7 +1,7 @@
 // src/index.ts
 var src_default = {
   async fetch(request, env, ctx) {
-	css_background = '#001e38';
+	var css_background = '#001e38';
   
     const BASIC_USER = "admin";
     const BASIC_PASS = "admin";
