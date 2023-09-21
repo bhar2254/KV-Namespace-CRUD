@@ -1,113 +1,72 @@
-export default {
+// src/index.ts
+var src_default = {
   async fetch(request, env, ctx) {
     const BASIC_USER = "admin";
     const BASIC_PASS = "admin";
-	const url = request.url
-
-	// Function to parse query strings
-	function getParameterByName(name) {
-		name = name.replace(/[\[\]]/g, '\\$&')
-		name = name.replace(/\//g, '')
-		var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-			results = regex.exec(url)
-
-		if (!results) return null
-		else if (!results[2]) return ''
-		else if (results[2]) {
-			results[2] = results[2].replace(/\//g, '')
-		}
-		
-		return decodeURIComponent(results[2].replace(/\+/g, ' '));
-	}
-
-  // The rest of this snippet for the demo page
-  function rawHtmlResponse(html) {
-    return new Response(html, {
-      headers: {
-        "content-type": "text/html;charset=UTF-8",
-      },
-    });
-  }
-
-    /**
-     * Throws exception on verification failure.
-     * @param {string} user
-     * @param {string} pass
-     * @throws {UnauthorizedException}
-     */
+    const url = request.url;
+    function getParameterByName(name) {
+      name = name.replace(/[\[\]]/g, "\\$&");
+      name = name.replace(/\//g, "");
+      var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"), results = regex.exec(url);
+      if (!results)
+        return null;
+      else if (!results[2])
+        return "";
+      else if (results[2]) {
+        results[2] = results[2].replace(/\//g, "");
+      }
+      return decodeURIComponent(results[2].replace(/\+/g, " "));
+    }
+    function rawHtmlResponse(html) {
+      return new Response(html, {
+        headers: {
+          "content-type": "text/html;charset=UTF-8"
+        }
+      });
+    }
     async function verifyCredentials(user, pass) {
       if (BASIC_USER !== user) {
         throw new UnauthorizedException("Invalid credentials.");
       }
-
       if (BASIC_PASS !== pass) {
         throw new UnauthorizedException("Invalid credentials.");
       }
     }
-
-    /**
-     * Parse HTTP Basic Authorization value.
-     * @param {Request} request
-     * @throws {BadRequestException}
-     * @returns {{ user: string, pass: string }}
-     */
-    async function basicAuthentication(request) {
-      const Authorization = request.headers.get("Authorization");
-
+    async function basicAuthentication(request2) {
+      const Authorization = request2.headers.get("Authorization");
       const [scheme, encoded] = Authorization.split(" ");
-
-      // The Authorization header must start with Basic, followed by a space.
       if (!encoded || scheme !== "Basic") {
         throw new BadRequestException("Malformed authorization header.");
       }
-
-      // Decodes the base64 value and performs unicode normalization.
-      // @see https://datatracker.ietf.org/doc/html/rfc7613#section-3.3.2 (and #section-4.2.2)
-      // @see https://dev.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String/normalize
-      const buffer = Uint8Array.from(atob(encoded), (character) =>
-        character.charCodeAt(0)
+      const buffer = Uint8Array.from(
+        atob(encoded),
+        (character) => character.charCodeAt(0)
       );
       const decoded = new TextDecoder().decode(buffer).normalize();
-
-      // The username & password are split by the first colon.
-      //=> example: "username:password"
       const index = decoded.indexOf(":");
-
-      // The user & password are split by the first colon and MUST NOT contain control characters.
-      // @see https://tools.ietf.org/html/rfc5234#appendix-B.1 (=> "CTL = %x00-1F / %x7F")
       if (index === -1 || /[\0-\x1F\x7F]/.test(decoded)) {
         throw new BadRequestException("Invalid authorization value.");
       }
-
       return {
         user: decoded.substring(0, index),
-        pass: decoded.substring(index + 1),
+        pass: decoded.substring(index + 1)
       };
     }
-
     async function UnauthorizedException(reason) {
       this.status = 401;
       this.statusText = "Unauthorized";
       this.reason = reason;
     }
-
     async function BadRequestException(reason) {
       this.status = 400;
       this.statusText = "Bad Request";
       this.reason = reason;
     }
-
     const { host, protocol, pathname } = new URL(request.url);
-
-    // In the case of a Basic authentication, the exchange MUST happen over an HTTPS (TLS) connection to be secure.
-    if (
-      "https:" !== protocol ||
-      "https" !== request.headers.get("x-forwarded-proto")
-    ) {
+    if ("https:" !== protocol || "https" !== request.headers.get("x-forwarded-proto")) {
       throw new BadRequestException("Please use a HTTPS connection.");
     }
-
-    switch (pathname) {	  
+    switch (pathname) {
       case "/setup/home":
         return new Response(`Cloudflare KV Namespace
 Redirectory
@@ -116,118 +75,82 @@ This worker manages ihcc.edu redirect KV namespace
 
 Sitemap
   PUBLIC
-    └ /setup/home - Welcome Page (you are here!)
-    └ /setup/login - Head here to auth in browser. Or, use Basic Auth in an HTTP header
-    └ /setup/logout - When you're finished head here to end your session
-    └ /* - Anything not defined by this Worker will go to the redirect KV Namespace
+    \u2514 /setup/home - Welcome Page (you are here!)
+    \u2514 /setup/login - Head here to auth in browser. Or, use Basic Auth in an HTTP header
+    \u2514 /setup/logout - When you're finished head here to end your session
+    \u2514 /* - Anything not defined by this Worker will go to the redirect KV Namespace
   AUTH REQUIRED
-    └ /setup/list - GET content of the Redirectory
-    └ /setup/form - UI form for interacting with KV namespace values
-    └ /setup/update - GET values in the redirectory if the value exists, send an error and ask for OW
-	  └ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Conflict`);
-
+    \u2514 /setup/list - GET content of the Redirectory
+    \u2514 /setup/form - UI form for interacting with KV namespace values
+    \u2514 /setup/update - GET values in the redirectory if the value exists, send an error and ask for OW
+	  \u2514 Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Conflict`);
       case "/setup/logout":
-        // Invalidate the "Authorization" header by returning a HTTP 401.
-        // We do not send a "WWW-Authenticate" header, as this would trigger
-        // a popup in the browser, immediately asking for credentials again.
         return new Response("Logged out.", { status: 401 });
-
       case "/setup/login": {
-        // The "Authorization" header is sent when authenticated.
         if (request.headers.has("Authorization")) {
-          // Throws exception when authorization fails.
           const { user, pass } = basicAuthentication(request);
           verifyCredentials(user, pass);
-
-          // Only returns this response when no exception is thrown.
-          return Response.redirect('https://' + host + '/setup/home', 301);
+          console.log(host);
+          return Response.redirect("https://" + host + "/setup/home", 301);
         }
-
-        // Not authenticated.
         return new Response("You need to login.", {
           status: 401,
           headers: {
             // Prompts the user for credentials.
-            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"',
-          },
+            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"'
+          }
         });
       }
-
       case "/setup/list": {
-        // The "Authorization" header is sent when authenticated.
         if (request.headers.has("Authorization")) {
-          // Throws exception when authorization fails.
           const { user, pass } = basicAuthentication(request);
           verifyCredentials(user, pass);
-
           const value = await env.NAMESPACE.list();
-
-          // Only returns this response when no exception is thrown.
           return new Response(JSON.stringify(value.keys), {
             status: 200,
             headers: {
-              "Cache-Control": "no-store",
-            },
+              "Cache-Control": "no-store"
+            }
           });
         }
-
-        // Not authenticated.
         return new Response("You need to login.", {
           status: 401,
           headers: {
             // Prompts the user for credentials.
-            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"',
-          },
+            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"'
+          }
         });
       }
-
       case "/setup/update": {
-        // The "Authorization" header is sent when authenticated.
         if (request.headers.has("Authorization")) {
-          // Throws exception when authorization fails.
           const { user, pass } = basicAuthentication(request);
           verifyCredentials(user, pass);
-		  
-          // Usage example
-          var queryKey = "/" + getParameterByName('key')
-          var queryValue = getParameterByName('value')
-          var queryOW = getParameterByName('ow') === "1"
-
-          const value = await env.NAMESPACE.get(queryKey)
-
-          //  If the query wasn't formatted properly reject the request
-          if(queryKey === null && queryValue === null) {
+          var queryKey = "/" + getParameterByName("key");
+          var queryValue = getParameterByName("value");
+          var queryOW = getParameterByName("ow") === "1";
+          const value = await env.NAMESPACE.get(queryKey);
+          if (queryKey === null && queryValue === null) {
             return new Response(`No values set for key or value!
 		
-Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Conflict`,{status:400})
-		      }
-
-          //  Value exists and OverWrite is necessary
-          if (!(value === null) && !queryOW ) {
-            return new Response(`Value exists for ${queryKey}. Select OverWrite to confirm update.`, {status: 409})
+Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Conflict`, { status: 400 });
           }
-
-          //  Value exists and OverWrite is set
+          if (!(value === null) && !queryOW) {
+            return new Response(`Value exists for ${queryKey}. Select OverWrite to confirm update.`, { status: 409 });
+          }
           if (!(value === null) && queryOW) {
-            await env.NAMESPACE.put(queryKey, 'https://' + queryValue)
-            return new Response(`Value for ${queryKey} OverWritten!`, {status: 200})
+            await env.NAMESPACE.put(queryKey, "https://" + queryValue);
+            return new Response(`Value for ${queryKey} OverWritten!`, { status: 200 });
           }
-
-          //  Value does not exists, okay to Write
           if (value === null) {
-            await env.NAMESPACE.put(queryKey, 'https://' + queryValue)
-            return new Response(`Value not found. Inserting ${queryKey}::${queryValue} into Redirectory.`, { status: 201 })
-          }         
+            await env.NAMESPACE.put(queryKey, "https://" + queryValue);
+            return new Response(`Value not found. Inserting ${queryKey}::${queryValue} into Redirectory.`, { status: 201 });
+          }
         }
       }
-
       case "/setup/form": {
-        // The "Authorization" header is sent when authenticated.
         if (request.headers.has("Authorization")) {
-          // Throws exception when authorization fails.
           const { user, pass } = basicAuthentication(request);
           verifyCredentials(user, pass);
-          
           return rawHtmlResponse(`<!DOCTYPE html>
           <html lang="en">
           <head>
@@ -298,32 +221,31 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
 
               xhr.send();
             }
-          </script>
+          <\/script>
           </body>
         </html>
-        `);  
+        `);
         }
-
-        // Not authenticated.
         return new Response("You need to login.", {
           status: 401,
           headers: {
             // Prompts the user for credentials.
-            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"',
-          },
+            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"'
+          }
         });
       }
-
       case "/favicon.ico":
       case "/robots.txt":
         return new Response(null, { status: 204 });
     }
-
-	const redirectURL = await env.NAMESPACE.get(pathname);
-	if (!redirectURL) {
-		return new Response("Not Found.", { status: 404 });
-	}
-	
-	return Response.redirect(redirectURL, 301);
+    const redirectURL = await env.NAMESPACE.get(pathname);
+    if (!redirectURL) {
+      return new Response("Not Found.", { status: 404 });
+    }
+    return Response.redirect(redirectURL, 301);
   }
+};
+
+export {
+  src_default as default
 };
