@@ -6,14 +6,14 @@ var src_default = {
     const url = request.url;
     function getParameterByName(name) {
       name = name.replace(/[\[\]]/g, "\\$&");
-      name = name.replace(/\//g, "");
+      name = name.replace(/\//g, "/");
       var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"), results = regex.exec(url);
       if (!results)
         return null;
       else if (!results[2])
         return "";
       else if (results[2]) {
-        results[2] = results[2].replace(/\//g, "");
+        results[2] = results[2].replace(/\//g, "/");
       }
       return decodeURIComponent(results[2].replace(/\+/g, " "));
     }
@@ -67,81 +67,56 @@ var src_default = {
       throw new BadRequestException("Please use a HTTPS connection.");
     }
     switch (pathname) {
-      case "/setup/home":
-        return new Response(`Cloudflare KV Namespace
-Redirectory
-
-This worker manages philamb.info redirect KV namespace
-
-Sitemap
-  PUBLIC
-    \u2514 /setup/ - Welcome Page (you are here!)
-    \u2514 /setup/login - Head here to auth in browser. Or, use Basic Auth in an HTTP header
-    \u2514 /setup/logout - When you're finished head here to end your session
-    \u2514 /* - Anything not defined by this Worker will go to the redirect KV Namespace
-  AUTH REQUIRED
-    \u2514 /setup/list - GET content of the Redirectory
-    \u2514 /setup/form - UI form for interacting with KV namespace values
-    \u2514 /setup/update - GET values in the redirectory if the value exists, send an error and ask for OW
-	  \u2514 Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Conflict`);
-      case "/setup/logout":
-        return new Response("Logged out.", { status: 401 });
-      case "/setup/login": {
-        if (request.headers.has("Authorization")) {
-          const { user, pass } = basicAuthentication(request);
-          verifyCredentials(user, pass);
-          console.log(host);
-          return Response.redirect("https://" + host + "/setup/home", 301);
-        }
-        return new Response("You need to login.", {
-          status: 401,
-          headers: {
-            // Prompts the user for credentials.
-            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"'
-          }
-        });
-      }
       case "/setup":
-        return new Response(`Cloudflare KV Namespace
-Redirectory
+          return rawHtmlResponse(`<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+	<head>
+		<meta charset="utf8" />
+		<title>Redirectory | Home</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<link rel="icon" type="image/x-icon" href="https://indianhills.edu/favicon.ico">
 
-This worker manages philamb.info redirect KV namespace
-
-Sitemap
-  PUBLIC
-    \u2514 /setup/ - Welcome Page (you are here!)
-    \u2514 /setup/login - Head here to auth in browser. Or, use Basic Auth in an HTTP header
-    \u2514 /setup/logout - When you're finished head here to end your session
-    \u2514 /* - Anything not defined by this Worker will go to the redirect KV Namespace
-  AUTH REQUIRED
-    \u2514 /setup/list - GET content of the Redirectory
-    \u2514 /setup/form - UI form for interacting with KV namespace values
-    \u2514 /setup/update - GET values in the redirectory if the value exists, send an error and ask for OW
-	  \u2514 Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Conflict`);
-      case "/setup/list": {
-        if (request.headers.has("Authorization")) {
-          const { user, pass } = basicAuthentication(request);
-          verifyCredentials(user, pass);
-          const value = await env.NAMESPACE.list();
-          return new Response(JSON.stringify(value.keys), {
-            status: 200,
-            headers: {
-              "Cache-Control": "no-store"
-            }
-          });
-        }
-        return new Response("You need to login.", {
-          status: 401,
-          headers: {
-            // Prompts the user for credentials.
-            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"'
-          }
-        });
-      }
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
+		<style>
+		:root {
+			--bs-body-bg: #32174d;
+		}
+		input {
+			background-color:rgba(125,125,125,1)!important;
+		}
+		</style>
+	</head>
+	<body>
+		<section class="vh-100 gradient-custom">
+			<div class="container py-5 h-100">
+				<div class="row d-flex justify-content-center align-items-center h-100">
+					<div class="col-12 col-md-8 col-lg-6 col-xl-5">
+						<div class="card bg-dark text-white" style="border-radius: 1rem;">
+							<div class="card-body p-5">
+								<h1>Redirectory Sitemap</h1>
+								<ul style="list-style: none;">
+									<li>PUBLIC</li>
+									<ul style="list-style: none;">
+										<li>\u2514 /setup - Welcome Page (you are here!)</li>
+										<li>\u2514 /* - Anything not defined by this Worker will go to the redirect KV Namespace</li>
+									</ul>
+									<li>AUTH REQUIRED</li>
+									<ul style="list-style: none;">
+										<li>\u2514 <a href="/setup/edit">/setup/edit</a> - UI form for interacting with KV namespace values</li>
+										<li>\u2514 <a href="/setup/update">/setup/update</a> - GET values in the redirectory if the value exists, send an error and ask for OW</li>
+										<li>\u2514 Usage - /setup/update?key={key}&value={value} add &ow=1 if the request returns 409 Conflict</li>
+									</ul>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>
+        `);
       case "/setup/update": {
-        if (request.headers.has("Authorization")) {
-          const { user, pass } = basicAuthentication(request);
-          verifyCredentials(user, pass);
           var queryKey = "/" + getParameterByName("key");
           var queryValue = getParameterByName("value");
           var queryOW = getParameterByName("ow") === "1";
@@ -158,35 +133,28 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
             await env.NAMESPACE.put(queryKey, "https://" + queryValue);
             return new Response(`Value for ${queryKey} OverWritten!`, { status: 200 });
           }
-          if (value === null) {
+          if (value === null && !(queryValue === null)) {
             await env.NAMESPACE.put(queryKey, "https://" + queryValue);
             return new Response(`Value not found. Inserting ${queryKey}::${queryValue} into Redirectory.`, { status: 201 });
           }
-        }
       }
-      case "/setup/form": {
-        if (request.headers.has("Authorization")) {
-          const { user, pass } = basicAuthentication(request);
-          verifyCredentials(user, pass);
+      case "/setup/edit": {
           return rawHtmlResponse(`<!DOCTYPE html>
-          <html lang="en">
+          <html lang="en" data-bs-theme="dark">
           <head>
             <meta charset="utf8" />
-            <title>Form Demo</title>
+            <title>Redirectory | Update</title>
             <meta name="viewport" content="width=device-width,initial-scale=1" />
+			<link rel="icon" type="image/x-icon" href="https://indianhills.edu/favicon.ico">
 			
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
 			<style>
-			  .gradient-custom {
-				 /* fallback for old browsers */
-				 background: #6a11cb;
-
-				 /* Chrome 10-25, Safari 5.1-6 */
-				 background: -webkit-linear-gradient(to right, rgba(106, 17, 203, 1), rgba(37, 117, 252, 1));
-
-				 /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-				 background: linear-gradient(to right, rgba(106, 17, 203, 1), rgba(37, 117, 252, 1))
-			  }
+				:root {
+					--bs-body-bg: #32174d;
+				}
+				input {
+					background-color:rgba(125,125,125,1)!important;
+				}
 			</style>
           </head>
           <body>
@@ -201,17 +169,18 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
 						  <br>
 						  <div class="form-outline form-white mb-4">
 							<label for="key"> Key</label>
-							<input class="form-control form-control-lg" id="key" name="key" type="text" placeholder='example' />
+							<input class="mt-1 form-control form-control-lg" id="key" name="key" type="text" placeholder='example' />
 						  </div>
 						  <div class="form-outline form-white mb-4">
 							<label for="value"> Value (https:// not necessary) </label>
-							<input class="form-control form-control-lg" id="value" name="value" type="value" placeholder='example.org'/>
+							<input class="mt-1 form-control form-control-lg" id="value" name="value" type="value" placeholder='example.org'/>
 						  </div>
 						  <div class="input">
 							<label class="form-check-label" for="ow"> OverWrite Data</label>
 							<input class="form-check-input" type="checkbox" id="ow" name="ow" value="1">
 						  </div>
 						  <br>
+							<a href="/setup" class="btn btn-outline-light btn-lg btn-secondary px-5">Back</a>
 						  <button form="updateForm" class="btn btn-outline-light btn-lg px-5" onclick="submitForm();" type="button">Submit</button>
 						</form>
 					  </div>
@@ -242,14 +211,6 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
           </body>
         </html>
         `);
-        }
-        return new Response("You need to login.", {
-          status: 401,
-          headers: {
-            // Prompts the user for credentials.
-            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"'
-          }
-        });
       }
       case "/favicon.ico":
       case "/robots.txt":
