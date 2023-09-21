@@ -1,6 +1,8 @@
 // src/index.ts
 var src_default = {
   async fetch(request, env, ctx) {
+	css_background = '#001e38';
+  
     const BASIC_USER = "admin";
     const BASIC_PASS = "admin";
     const url = request.url;
@@ -79,7 +81,7 @@ var src_default = {
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
 		<style>
 		:root {
-			--bs-body-bg: #32174d;
+			--bs-body-bg: ${css_background};
 		}
 		input {
 			background-color:rgba(125,125,125,1)!important;
@@ -150,7 +152,7 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
 			<style>
 				:root {
-					--bs-body-bg: #32174d;
+					--bs-body-bg: ${css_background};
 				}
 				input {
 					background-color:rgba(125,125,125,1)!important;
