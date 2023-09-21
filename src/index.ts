@@ -71,7 +71,7 @@ var src_default = {
         return new Response(`Cloudflare KV Namespace
 Redirectory
 
-This worker manages ihcc.edu redirect KV namespace
+This worker manages philamb.info redirect KV namespace
 
 Sitemap
   PUBLIC
