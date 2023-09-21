@@ -107,31 +107,32 @@ export default {
       throw new BadRequestException("Please use a HTTPS connection.");
     }
 
-    switch (pathname) {
-      case "/":
-        return new Response(`Indian Hills Community College
+    switch (pathname) {	  
+      case "/setup/home":
+        return new Response(`Cloudflare KV Namespace
 Redirectory
 
 This worker manages ihcc.edu redirect KV namespace
 
 Sitemap
   PUBLIC
-    └ / - Welcome Page (you are here!)
-    └ /login - Head here to auth in browser. Or, use Basic Auth in an HTTP header
-    └ /logout - When you're finished head here to end your session
+    └ /home - Welcome Page (you are here!)
+    └ /setup/login - Head here to auth in browser. Or, use Basic Auth in an HTTP header
+    └ /setup/logout - When you're finished head here to end your session
+    └ /* - Anything not defined by this Worker will go to the redirect KV Namespace
   AUTH REQUIRED
-    └ /list - GET content of the Redirectory
-    └ /form - UI form for interacting with KV namespace values
-    └ /update - GET values in the redirectory if the value exists, send an error and ask for OW
+    └ /setup/list - GET content of the Redirectory
+    └ /setup/form - UI form for interacting with KV namespace values
+    └ /setup/update - GET values in the redirectory if the value exists, send an error and ask for OW
 	  └ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Conflict`);
 
-      case "/logout":
+      case "/setup/logout":
         // Invalidate the "Authorization" header by returning a HTTP 401.
         // We do not send a "WWW-Authenticate" header, as this would trigger
         // a popup in the browser, immediately asking for credentials again.
         return new Response("Logged out.", { status: 401 });
 
-      case "/login": {
+      case "/setup/login": {
         // The "Authorization" header is sent when authenticated.
         if (request.headers.has("Authorization")) {
           // Throws exception when authorization fails.
@@ -152,7 +153,7 @@ Sitemap
         });
       }
 
-      case "/list": {
+      case "/setup/list": {
         // The "Authorization" header is sent when authenticated.
         if (request.headers.has("Authorization")) {
           // Throws exception when authorization fails.
@@ -180,7 +181,7 @@ Sitemap
         });
       }
 
-      case "/update": {
+      case "/setup/update": {
         // The "Authorization" header is sent when authenticated.
         if (request.headers.has("Authorization")) {
           // Throws exception when authorization fails.
@@ -220,7 +221,7 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
         }
       }
 
-      case "/form": {
+      case "/setup/form": {
         // The "Authorization" header is sent when authenticated.
         if (request.headers.has("Authorization")) {
           // Throws exception when authorization fails.
@@ -287,7 +288,7 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
               value = document.getElementById('value').value
               ow = document.getElementById('ow').checked ? 1 : 0
           
-              xhr.open("GET", "/update?key=" + key + "&value=" + value + "&ow=" + ow, true);
+              xhr.open("GET", "/setup/update?key=" + key + "&value=" + value + "&ow=" + ow, true);
               xhr.setRequestHeader('Authorization', 'Basic YWRtaW46YWRtaW4=');
 
               xhr.onreadystatechange = function() {
@@ -313,37 +314,16 @@ Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Con
         });
       }
 
-      case "/admin": {
-        // The "Authorization" header is sent when authenticated.
-        if (request.headers.has("Authorization")) {
-          // Throws exception when authorization fails.
-          const { user, pass } = basicAuthentication(request);
-          verifyCredentials(user, pass);
-
-          // Only returns this response when no exception is thrown.
-          return new Response("You have private access.", {
-            status: 200,
-            headers: {
-              "Cache-Control": "no-store",
-            },
-          });
-        }
-
-        // Not authenticated.
-        return new Response("You need to login.", {
-          status: 401,
-          headers: {
-            // Prompts the user for credentials.
-            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"',
-          },
-        });
-      }
-
       case "/favicon.ico":
       case "/robots.txt":
         return new Response(null, { status: 204 });
     }
 
-    return new Response("Not Found.", { status: 404 });
-  },
+	const redirectURL = await env.NAMESPACE.get(pathname);
+	if (!redirectURL) {
+		return new Response("Not Found.", { status: 404 });
+	}
+	
+	return Response.redirect(redirectURL, 301);
+  }
 };

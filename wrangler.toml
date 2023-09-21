@@ -10,3 +10,7 @@ crons = [ ]
 [[kv_namespaces]]
 id = "1911d15629e8414db3666248c2f13beb"
 binding = "NAMESPACE"
+
+routes = [
+	{ pattern = "blaineharper.com/*", custom_domain = true }
+]
