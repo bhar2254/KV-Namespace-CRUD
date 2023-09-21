@@ -97,7 +97,7 @@ export default {
       this.reason = reason;
     }
 
-    const { protocol, pathname } = new URL(request.url);
+    const { host, protocol, pathname } = new URL(request.url);
 
     // In the case of a Basic authentication, the exchange MUST happen over an HTTPS (TLS) connection to be secure.
     if (
@@ -116,7 +116,7 @@ This worker manages ihcc.edu redirect KV namespace
 
 Sitemap
   PUBLIC
-    └ /home - Welcome Page (you are here!)
+    └ /setup/home - Welcome Page (you are here!)
     └ /setup/login - Head here to auth in browser. Or, use Basic Auth in an HTTP header
     └ /setup/logout - When you're finished head here to end your session
     └ /* - Anything not defined by this Worker will go to the redirect KV Namespace
@@ -140,7 +140,7 @@ Sitemap
           verifyCredentials(user, pass);
 
           // Only returns this response when no exception is thrown.
-          return Response.redirect('https://update-shorty.ihcc.workers.dev', 301);
+          return Response.redirect('https://' + host + '/setup/home', 301);
         }
 
         // Not authenticated.
