@@ -118,23 +118,6 @@ Sitemap
     \u2514 /setup/form - UI form for interacting with KV namespace values
     \u2514 /setup/update - GET values in the redirectory if the value exists, send an error and ask for OW
 	  \u2514 Usage - /update?key={key}&value={value} add &ow=1 if the request returns 409 Conflict`);
-      case "/setup/logout":
-        return new Response("Logged out.", { status: 401 });
-      case "/setup/login": {
-        if (request.headers.has("Authorization")) {
-          const { user, pass } = basicAuthentication(request);
-          verifyCredentials(user, pass);
-          console.log(host);
-          return Response.redirect("https://" + host + "/setup/home", 301);
-        }
-        return new Response("You need to login.", {
-          status: 401,
-          headers: {
-            // Prompts the user for credentials.
-            "WWW-Authenticate": 'Basic realm="ihcc-worker", charset="UTF-8"'
-          }
-        });
-      }
       case "/setup/list": {
         if (request.headers.has("Authorization")) {
           const { user, pass } = basicAuthentication(request);
